@@ -1,0 +1,16 @@
+{
+  "name": "@remindler/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@remindler/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "latest"
+  }
+}

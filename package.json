@@ -1,0 +1,21 @@
+{
+  "name": "remindler",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.20.0",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run",
+    "build": "pnpm -r --if-present build",
+    "dev:web": "pnpm --filter @remindler/web dev",
+    "dev:api": "pnpm --filter @remindler/api dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "@types/node": "latest",
+    "eslint": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest",
+    "vitest": "latest"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@remindler/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@remindler/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "latest"
+  }
+}
