@@ -3,7 +3,8 @@ dist/
 coverage/
 
 .DS_Store
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 
 *.log
