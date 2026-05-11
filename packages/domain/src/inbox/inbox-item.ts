@@ -1,10 +1,11 @@
 import {
+  ArchivedItemCannotBeClassifiedError,
+  ConvertedItemCannotBeClassifiedError,
   EmptyInboxItemContentError,
   EmptyInboxItemIdError,
-  EmptyInboxItemUserIdError,
-  InvalidInboxItemDateError
+  EmptyInboxItemUserIdError
 } from "./inbox-item.errors"
-import { InboxItemSnapshot } from "./inbox-item.types"
+import { InboxItemSnapshot, InboxItemType } from "./inbox-item.types"
 
 export class InboxItem {
   private constructor(private props: InboxItemSnapshot) {}
@@ -20,10 +21,11 @@ export class InboxItem {
   static create(
     id: InboxItemSnapshot["id"],
     userId: InboxItemSnapshot["userId"],
-    rawContent: InboxItemSnapshot["rawContent"],
-    now: InboxItemSnapshot["createdAt"]
+    rawContent: InboxItemSnapshot["rawContent"]
   ): InboxItem {
-    validateCreateInboxItemInput(id, userId, rawContent, now)
+    validateCreateInboxItemInput(id, userId, rawContent)
+    const now = new Date()
+
     return new InboxItem({
       id,
       userId,
@@ -33,13 +35,29 @@ export class InboxItem {
       updatedAt: now
     })
   }
+
+  classify(type: InboxItemType): void {
+    if (this.props.status === "archived") {
+      throw new ArchivedItemCannotBeClassifiedError()
+    }
+
+    if (this.props.status === "converted") {
+      throw new ConvertedItemCannotBeClassifiedError()
+    }
+
+    this.props = {
+      ...this.props,
+      selectedType: type,
+      status: "classified",
+      updatedAt: new Date()
+    }
+  }
 }
 
 const validateCreateInboxItemInput = (
   id: InboxItemSnapshot["id"],
   userId: InboxItemSnapshot["userId"],
-  rawContent: InboxItemSnapshot["rawContent"],
-  now: InboxItemSnapshot["createdAt"]
+  rawContent: InboxItemSnapshot["rawContent"]
 ) => {
   if (rawContent.trim() === "") {
     throw new EmptyInboxItemContentError()
@@ -51,9 +69,5 @@ const validateCreateInboxItemInput = (
 
   if (userId.trim() === "") {
     throw new EmptyInboxItemUserIdError()
-  }
-
-  if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
-    throw new InvalidInboxItemDateError()
   }
 }

@@ -18,8 +18,14 @@ export class EmptyInboxItemUserIdError extends DomainError {
   }
 }
 
-export class InvalidInboxItemDateError extends DomainError {
+export class ArchivedItemCannotBeClassifiedError extends DomainError {
   constructor() {
-    super("Inbox item date must be valid.")
+    super("Archived inbox item cannot be classified.")
+  }
+}
+
+export class ConvertedItemCannotBeClassifiedError extends DomainError {
+  constructor() {
+    super("Converted inbox item cannot be classified.")
   }
 }
