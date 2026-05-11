@@ -1,9 +1,13 @@
+import { assertIsNotEmpty } from "../validation/assert-is-not-empty"
 import {
-  ArchivedItemCannotBeClassifiedError,
-  ConvertedItemCannotBeClassifiedError,
+  ArchivedItemCannotBeArchivedError,
+  ArchivedItemCannotBeConvertedError,
+  ConvertedItemCannotBeArchivedError,
+  EmptyConvertedEntityIdError,
   EmptyInboxItemContentError,
   EmptyInboxItemIdError,
-  EmptyInboxItemUserIdError
+  EmptyInboxItemUserIdError,
+  InboxItemAlreadyConvertedError
 } from "./inbox-item.errors"
 import { InboxItemSnapshot, InboxItemType } from "./inbox-item.types"
 
@@ -30,25 +34,46 @@ export class InboxItem {
       id,
       userId,
       rawContent: rawContent.trim(),
-      status: "unclassified",
+      status: "pending",
       createdAt: now,
       updatedAt: now
     })
   }
 
-  classify(type: InboxItemType): void {
-    if (this.props.status === "archived") {
-      throw new ArchivedItemCannotBeClassifiedError()
-    }
+  convert(entityId: string, entityType: InboxItemType): void {
+    assertIsNotEmpty(entityId, () => new EmptyConvertedEntityIdError())
 
     if (this.props.status === "converted") {
-      throw new ConvertedItemCannotBeClassifiedError()
+      throw new InboxItemAlreadyConvertedError()
+    }
+
+    if (this.props.status === "archived") {
+      throw new ArchivedItemCannotBeConvertedError()
+    }
+
+    const now = new Date()
+
+    this.props = {
+      ...this.props,
+      status: "converted",
+      convertedEntityId: entityId.trim(),
+      convertedEntityType: entityType,
+      convertedAt: now,
+      updatedAt: now
+    }
+  }
+
+  archive(): void {
+    if (this.props.status === "archived") {
+      throw new ArchivedItemCannotBeArchivedError()
+    }
+    if (this.props.status === "converted") {
+      throw new ConvertedItemCannotBeArchivedError()
     }
 
     this.props = {
       ...this.props,
-      selectedType: type,
-      status: "classified",
+      status: "archived",
       updatedAt: new Date()
     }
   }
@@ -59,15 +84,7 @@ const validateCreateInboxItemInput = (
   userId: InboxItemSnapshot["userId"],
   rawContent: InboxItemSnapshot["rawContent"]
 ) => {
-  if (rawContent.trim() === "") {
-    throw new EmptyInboxItemContentError()
-  }
-
-  if (id.trim() === "") {
-    throw new EmptyInboxItemIdError()
-  }
-
-  if (userId.trim() === "") {
-    throw new EmptyInboxItemUserIdError()
-  }
+  assertIsNotEmpty(rawContent, () => new EmptyInboxItemContentError())
+  assertIsNotEmpty(id, () => new EmptyInboxItemIdError())
+  assertIsNotEmpty(userId, () => new EmptyInboxItemUserIdError())
 }

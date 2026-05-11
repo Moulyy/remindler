@@ -18,14 +18,32 @@ export class EmptyInboxItemUserIdError extends DomainError {
   }
 }
 
-export class ArchivedItemCannotBeClassifiedError extends DomainError {
+export class InboxItemAlreadyConvertedError extends DomainError {
   constructor() {
-    super("Archived inbox item cannot be classified.")
+    super("Inbox item has already been converted.")
   }
 }
 
-export class ConvertedItemCannotBeClassifiedError extends DomainError {
+export class ArchivedItemCannotBeConvertedError extends DomainError {
   constructor() {
-    super("Converted inbox item cannot be classified.")
+    super("Archived inbox items cannot be converted.")
+  }
+}
+
+export class EmptyConvertedEntityIdError extends DomainError {
+  constructor() {
+    super("Converted entity ID cannot be empty.")
+  }
+}
+
+export class ArchivedItemCannotBeArchivedError extends DomainError {
+  constructor() {
+    super("Inbox item is already archived.")
+  }
+}
+
+export class ConvertedItemCannotBeArchivedError extends DomainError {
+  constructor() {
+    super("Converted inbox items cannot be archived.")
   }
 }

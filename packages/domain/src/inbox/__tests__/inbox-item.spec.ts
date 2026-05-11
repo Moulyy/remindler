@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  ArchivedItemCannotBeClassifiedError,
-  ConvertedItemCannotBeClassifiedError,
+  ArchivedItemCannotBeArchivedError,
+  ArchivedItemCannotBeConvertedError,
+  ConvertedItemCannotBeArchivedError,
+  EmptyConvertedEntityIdError,
   EmptyInboxItemContentError,
   EmptyInboxItemIdError,
-  EmptyInboxItemUserIdError
-} from "../inbox-item.errors"
-import { InboxItem } from "../inbox-item"
+  EmptyInboxItemUserIdError,
+  InboxItem,
+  InboxItemAlreadyConvertedError
+} from "../index"
 
 describe("InboxItem", () => {
   describe("create", () => {
-    it("creates an unclassified inbox item", () => {
+    it("creates a pending inbox item", () => {
       const beforeCreate = new Date()
 
       const inboxItem = InboxItem.create("inbox_123", "user_123", "Acheter du lait")
@@ -22,7 +25,7 @@ describe("InboxItem", () => {
         id: "inbox_123",
         userId: "user_123",
         rawContent: "Acheter du lait",
-        status: "unclassified"
+        status: "pending"
       })
       expect(snapshot.createdAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime())
       expect(snapshot.createdAt.getTime()).toBeLessThanOrEqual(afterCreate.getTime())
@@ -54,32 +57,56 @@ describe("InboxItem", () => {
     })
   })
 
-  describe("classify", () => {
-    it("classifies an unclassified inbox item", () => {
+  describe("convert", () => {
+    it("converts a pending inbox item", () => {
       const inboxItem = InboxItem.create("inbox_123", "user_123", "Acheter du lait")
-      const beforeClassify = new Date()
+      const beforeConvert = new Date()
 
-      inboxItem.classify("shopping")
+      inboxItem.convert("shopping_456", "shopping")
 
-      const afterClassify = new Date()
+      const afterConvert = new Date()
       const snapshot = inboxItem.toSnapshot()
 
-      expect(snapshot.status).toBe("classified")
-      expect(snapshot.selectedType).toBe("shopping")
-      expect(snapshot.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeClassify.getTime())
-      expect(snapshot.updatedAt.getTime()).toBeLessThanOrEqual(afterClassify.getTime())
+      expect(snapshot).toMatchObject({
+        status: "converted",
+        convertedEntityId: "shopping_456",
+        convertedEntityType: "shopping"
+      })
+      expect(snapshot.convertedAt).toBeInstanceOf(Date)
+      expect(snapshot.convertedAt?.getTime()).toBeGreaterThanOrEqual(beforeConvert.getTime())
+      expect(snapshot.convertedAt?.getTime()).toBeLessThanOrEqual(afterConvert.getTime())
+      expect(snapshot.updatedAt).toEqual(snapshot.convertedAt)
     })
 
-    it("allows reclassifying a classified inbox item", () => {
+    it("trims converted entity id", () => {
       const inboxItem = InboxItem.create("inbox_123", "user_123", "Acheter du lait")
 
-      inboxItem.classify("shopping")
-      inboxItem.classify("task")
+      inboxItem.convert("  shopping_456  ", "shopping")
 
-      expect(inboxItem.toSnapshot()).toMatchObject({
-        status: "classified",
-        selectedType: "task"
+      expect(inboxItem.toSnapshot().convertedEntityId).toBe("shopping_456")
+    })
+
+    it("rejects empty converted entity id", () => {
+      const inboxItem = InboxItem.create("inbox_123", "user_123", "Acheter du lait")
+
+      expect(() => inboxItem.convert("   ", "shopping")).toThrow(EmptyConvertedEntityIdError)
+    })
+
+    it("rejects already converted inbox items", () => {
+      const now = new Date("2026-05-11T12:00:00.000Z")
+      const inboxItem = InboxItem.fromSnapshot({
+        id: "inbox_123",
+        userId: "user_123",
+        rawContent: "Acheter du lait",
+        status: "converted",
+        convertedEntityType: "shopping",
+        convertedEntityId: "shopping_456",
+        createdAt: now,
+        updatedAt: now,
+        convertedAt: now
       })
+
+      expect(() => inboxItem.convert("task_789", "task")).toThrow(InboxItemAlreadyConvertedError)
     })
 
     it("rejects archived inbox items", () => {
@@ -93,7 +120,42 @@ describe("InboxItem", () => {
         updatedAt: now
       })
 
-      expect(() => inboxItem.classify("shopping")).toThrow(ArchivedItemCannotBeClassifiedError)
+      expect(() => inboxItem.convert("shopping_456", "shopping")).toThrow(
+        ArchivedItemCannotBeConvertedError
+      )
+    })
+  })
+
+  describe("archive", () => {
+    it("archives a pending inbox item", () => {
+      const inboxItem = InboxItem.create("inbox_123", "user_123", "Acheter du lait")
+      const beforeArchive = new Date()
+
+      inboxItem.archive()
+
+      const afterArchive = new Date()
+      const snapshot = inboxItem.toSnapshot()
+
+      expect(snapshot.status).toBe("archived")
+      expect(snapshot.updatedAt.getTime()).toBeGreaterThanOrEqual(beforeArchive.getTime())
+      expect(snapshot.updatedAt.getTime()).toBeLessThanOrEqual(afterArchive.getTime())
+      expect(snapshot.convertedEntityId).toBeUndefined()
+      expect(snapshot.convertedEntityType).toBeUndefined()
+      expect(snapshot.convertedAt).toBeUndefined()
+    })
+
+    it("rejects already archived inbox items", () => {
+      const now = new Date("2026-05-11T12:00:00.000Z")
+      const inboxItem = InboxItem.fromSnapshot({
+        id: "inbox_123",
+        userId: "user_123",
+        rawContent: "Acheter du lait",
+        status: "archived",
+        createdAt: now,
+        updatedAt: now
+      })
+
+      expect(() => inboxItem.archive()).toThrow(ArchivedItemCannotBeArchivedError)
     })
 
     it("rejects converted inbox items", () => {
@@ -102,7 +164,6 @@ describe("InboxItem", () => {
         id: "inbox_123",
         userId: "user_123",
         rawContent: "Acheter du lait",
-        selectedType: "shopping",
         status: "converted",
         convertedEntityType: "shopping",
         convertedEntityId: "shopping_456",
@@ -111,7 +172,7 @@ describe("InboxItem", () => {
         convertedAt: now
       })
 
-      expect(() => inboxItem.classify("task")).toThrow(ConvertedItemCannotBeClassifiedError)
+      expect(() => inboxItem.archive()).toThrow(ConvertedItemCannotBeArchivedError)
     })
   })
 })
