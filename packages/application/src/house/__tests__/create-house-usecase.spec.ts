@@ -1,13 +1,8 @@
 import { EmptyHouseNameError, House, HouseMember } from "@remindler/domain"
 import { describe, expect, it } from "vitest"
 
-import { IdGenerator } from "../../common"
-import {
-  Clock,
-  CreateHouseUseCase,
-  HouseMemberRepository,
-  HouseRepository
-} from "../create-house-usecase"
+import { Clock, IdGenerator } from "../../common"
+import { CreateHouseUseCase, HouseMemberRepository, HouseRepository } from "../create-house-usecase"
 
 describe("CreateHouseUseCase", () => {
   it("creates a house and its owner member", async () => {

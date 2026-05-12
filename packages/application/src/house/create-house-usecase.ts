@@ -1,6 +1,6 @@
 import { House, HouseMember, HouseMemberSnapshot, HouseSnapshot } from "@remindler/domain"
 
-import { IdGenerator } from "../common"
+import { Clock, IdGenerator } from "../common"
 
 export type CreateHouseInput = {
   name: string
@@ -10,10 +10,6 @@ export type CreateHouseInput = {
 export type CreateHouseOutput = {
   house: HouseSnapshot
   owner: HouseMemberSnapshot
-}
-
-export type Clock = {
-  now(): Date
 }
 
 export type HouseRepository = {
