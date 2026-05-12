@@ -9,40 +9,80 @@ abstractions unless there is a concrete need.
 
 ## Product Vision
 
-Remindler is a personal daily-life management application for individuals, not businesses.
+Remindler is a family and home organization application for couples, families, shared homes,
+and roommates.
 
-The goal is to help users reduce mental load by giving them one simple place to capture,
-organize, remember, and follow the small things that matter in everyday life.
+The goal is to reduce domestic mental load by making it clear what needs to be done, who is
+responsible for it, when it is due, and what its current status is.
 
-The product should feel like a personal cockpit for daily life. It brings together quick notes,
-tasks, reminders, shopping, expenses, budget tracking, ideas, wishlist items, and household
-obligations without asking the user to build a complex system.
+V1 must focus on domestic task management. It should not include budgeting, wishlists, detailed
+shopping lists, document management, or broad personal knowledge management. These modules may be
+added later, but they are not part of the initial product foundation.
 
 The core product loop is:
 
 ```text
-capture -> organize -> remind -> follow
+house -> members -> tasks -> assignment -> due date -> status -> recurrence
 ```
 
-The central experience starts with a quick capture flow. A user can write a natural sentence such as:
+The central experience starts with a house. A user can create a house, invite their partner
+or family members, then plan and track everyday responsibilities such as:
 
 ```text
-Acheter du lait demain
-Dépense 18€ kebab hier
-Idée : app pour gérer les patrons de couture
-Penser à prendre RDV chez le vétérinaire
+Sortir les poubelles
+Faire les courses
+Nettoyer la salle de bain
+Appeler le vétérinaire
+Payer une facture
+Récupérer un colis
+Changer les draps
+Arroser les plantes
+Gérer une démarche administrative
 ```
 
-The application should keep the raw capture as an `InboxItem`, then help the user classify and
-convert it into the right kind of object: task, expense, shopping item, idea, wishlist item, or
-household item.
+The application should be opinionated, simple, and guided. It should not feel like a database, a
+Notion clone, a pure todo app, or a business task manager. Its value comes from helping the members
+of a house share domestic responsibilities clearly and fairly.
 
-For V1, classification is semi-manual. The app does not need AI. The priority is to build a solid,
-persistent inbox and a guided flow that lets the user capture quickly and organize later.
+The main product entities are:
 
-The product should be opinionated, simple, and guided. It should not feel like a database, a Notion
-clone, a pure todo app, a pure budget app, or a pure notes app. Its value comes from connecting daily
-life domains that are usually split across many apps.
+- `User`: an application user
+- `House`: a home, couple, family, or shared living group
+- `HouseMember`: a user's membership in a house, with a role
+- `HouseTask`: a domestic task linked to a house
+
+The MVP task model should support:
+
+- status: `todo`, `in_progress`, `done`, `cancelled`; `blocked` may be added if useful
+- priority: `low`, `medium`, `high`
+- category: `cleaning`, `shopping`, `admin`, `pet`, `health`, `maintenance`, `cooking`, `finance`,
+  `other`
+- one or more assignees
+- optional due date
+- simple recurrence: none, daily, weekly, monthly
+
+The MVP must include:
+
+- user authentication
+- house creation
+- invitation or addition of house members
+- task creation
+- task assignment to one or more members
+- due dates
+- priorities
+- categories
+- status changes
+- a "Today" view
+- an "All tasks" view
+- filters by status, member, category, and date
+
+The "Today" view is the primary screen. It should surface:
+
+- my tasks due today
+- house tasks due today
+- overdue tasks
+- unassigned tasks
+- upcoming important tasks
 
 ## Workspace Structure
 
