@@ -8,7 +8,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@remindler/shared": "workspace:*"
+    "@remindler/application": "workspace:*",
+    "@remindler/domain": "workspace:*",
+    "fastify": "latest"
   },
   "devDependencies": {
     "tsx": "latest"
