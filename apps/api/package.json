@@ -5,14 +5,21 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@prisma/client": "^7.8.0",
     "@remindler/application": "workspace:*",
     "@remindler/domain": "workspace:*",
     "fastify": "latest"
   },
   "devDependencies": {
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0",
     "tsx": "latest"
   }
 }
