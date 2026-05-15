@@ -2,7 +2,7 @@ import { UserRepository } from "@remindler/application"
 import { User } from "@remindler/domain"
 
 import { PrismaDatabaseClient } from "../database/prisma-client"
-import { User as PrismaUser } from "../generated/prisma/client"
+import { User as PrismaUser } from "../database/generated/prisma/client"
 
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaDatabaseClient) {}
