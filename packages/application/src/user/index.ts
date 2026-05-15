@@ -1,5 +1,7 @@
+export { AuthenticateUserUseCase, InvalidUserSessionError } from "./authenticate-user-usecase"
 export { InvalidUserCredentialsError, LoginUserUseCase } from "./login-user-usecase"
 export { EmptyUserPasswordError, RegisterUserUseCase } from "./register-user-usecase"
+export type { AuthenticateUserInput, AuthenticateUserOutput } from "./authenticate-user-usecase"
 export type { LoginUserInput, LoginUserOutput } from "./login-user-usecase"
 export type {
   PasswordHasher,

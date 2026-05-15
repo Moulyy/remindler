@@ -219,6 +219,8 @@ const createUserSessionRepository = (): UserSessionRepository & {
 
   return {
     savedSessions,
+    findByTokenHash: async (tokenHash) =>
+      savedSessions.find((session) => session.tokenHash === tokenHash),
     save: async (session) => {
       savedSessions.push(session)
     }

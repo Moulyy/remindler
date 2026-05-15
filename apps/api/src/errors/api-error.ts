@@ -14,3 +14,9 @@ export abstract class BadRequestApiError extends ApiError {
     super(message, 400, code)
   }
 }
+
+export abstract class UnauthorizedApiError extends ApiError {
+  constructor(message: string, code: string) {
+    super(message, 401, code)
+  }
+}

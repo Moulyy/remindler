@@ -10,6 +10,7 @@ export type UserSession = {
 }
 
 export type UserSessionRepository = {
+  findByTokenHash(tokenHash: string): Promise<UserSession | undefined>
   save(session: UserSession): Promise<void>
 }
 

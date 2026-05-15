@@ -35,6 +35,11 @@ describe("API server", () => {
 })
 
 const createDependencies = (): AppDependencies => ({
+  authenticateUserUseCase: {
+    execute: async () => {
+      throw new Error("Unexpected authenticate user use case call.")
+    }
+  },
   createHouseUseCase: {
     execute: async () => {
       throw new Error("Unexpected create house use case call.")

@@ -1,28 +1,17 @@
 import { FastifyPluginAsync } from "fastify"
 
+import { authenticateRequest } from "../auth/authenticate-request"
 import { AppDependencies } from "../composition-root"
-import { MissingAuthenticatedUserError } from "../errors/missing-authenticated-user-error"
 
 type CreateHouseBody = {
   name: string
 }
 
-type CreateHouseHeaders = {
-  "x-user-id"?: string
-}
-
 export const houseRoutes: FastifyPluginAsync<AppDependencies> = async (server, dependencies) => {
-  server.post<{ Body: CreateHouseBody; Headers: CreateHouseHeaders }>(
+  server.post<{ Body: CreateHouseBody }>(
     "/houses",
     {
       schema: {
-        headers: {
-          type: "object",
-          required: ["x-user-id"],
-          properties: {
-            "x-user-id": { type: "string" }
-          }
-        },
         body: {
           type: "object",
           required: ["name"],
@@ -34,15 +23,11 @@ export const houseRoutes: FastifyPluginAsync<AppDependencies> = async (server, d
       }
     },
     async (request, reply) => {
-      const createdBy = request.headers["x-user-id"]
-
-      if (createdBy === undefined) {
-        throw new MissingAuthenticatedUserError()
-      }
+      const authenticatedUser = await authenticateRequest(request, dependencies)
 
       const output = await dependencies.createHouseUseCase.execute({
         name: request.body.name,
-        createdBy
+        createdBy: authenticatedUser.id
       })
 
       return reply.code(201).send(output)

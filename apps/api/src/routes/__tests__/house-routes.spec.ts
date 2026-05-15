@@ -1,4 +1,9 @@
-import { CreateHouseInput, CreateHouseOutput } from "@remindler/application"
+import {
+  AuthenticateUserInput,
+  CreateHouseInput,
+  CreateHouseOutput,
+  InvalidUserSessionError
+} from "@remindler/application"
 import { describe, expect, it } from "vitest"
 
 import { AppDependencies } from "../../composition-root"
@@ -30,7 +35,7 @@ describe("house routes", () => {
       method: "POST",
       url: "/api/houses",
       headers: {
-        "x-user-id": "user_123"
+        authorization: "Bearer session_token"
       },
       payload: {
         name: "Maison"
@@ -56,7 +61,7 @@ describe("house routes", () => {
   })
 
   it("passes create house payload to the use case", async () => {
-    const { dependencies, receivedInputs } = createTestContext()
+    const { dependencies, receivedAuthenticateInputs, receivedInputs } = createTestContext()
     const server = buildServer({
       logger: false,
       dependencies
@@ -66,13 +71,18 @@ describe("house routes", () => {
       method: "POST",
       url: "/api/houses",
       headers: {
-        "x-user-id": "user_123"
+        authorization: "Bearer session_token"
       },
       payload: {
         name: "Maison"
       }
     })
 
+    expect(receivedAuthenticateInputs).toEqual([
+      {
+        token: "session_token"
+      }
+    ])
     expect(receivedInputs).toEqual([
       {
         name: "Maison",
@@ -95,10 +105,34 @@ describe("house routes", () => {
       }
     })
 
-    expect(response.statusCode).toBe(400)
+    expect(response.statusCode).toBe(401)
     expect(response.json()).toEqual({
-      error: "Bad Request",
-      message: "headers must have required property 'x-user-id'"
+      error: "MISSING_AUTHENTICATED_USER",
+      message: "Authenticated user is required."
+    })
+  })
+
+  it("rejects invalid bearer tokens", async () => {
+    const server = buildServer({
+      logger: false,
+      dependencies: createTestContext(undefined, new InvalidUserSessionError()).dependencies
+    })
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/houses",
+      headers: {
+        authorization: "Bearer invalid_token"
+      },
+      payload: {
+        name: "Maison"
+      }
+    })
+
+    expect(response.statusCode).toBe(401)
+    expect(response.json()).toEqual({
+      error: "MISSING_AUTHENTICATED_USER",
+      message: "Authenticated user is required."
     })
   })
 
@@ -112,7 +146,7 @@ describe("house routes", () => {
       method: "POST",
       url: "/api/houses",
       headers: {
-        "x-user-id": "user_123"
+        authorization: "Bearer session_token"
       },
       payload: {}
     })
@@ -136,12 +170,29 @@ const createTestContext = (
       role: "owner",
       joinedAt: new Date("2026-05-12T08:00:00.000Z")
     }
-  }
-): { dependencies: AppDependencies; receivedInputs: CreateHouseInput[] } => {
+  },
+  authenticateResult: { userId: string } | Error = { userId: "user_123" }
+): {
+  dependencies: AppDependencies
+  receivedAuthenticateInputs: AuthenticateUserInput[]
+  receivedInputs: CreateHouseInput[]
+} => {
+  const receivedAuthenticateInputs: AuthenticateUserInput[] = []
   const receivedInputs: CreateHouseInput[] = []
 
   return {
     dependencies: {
+      authenticateUserUseCase: {
+        execute: async (input) => {
+          receivedAuthenticateInputs.push(input)
+
+          if (authenticateResult instanceof Error) {
+            throw authenticateResult
+          }
+
+          return authenticateResult
+        }
+      },
       createHouseUseCase: {
         execute: async (input) => {
           receivedInputs.push(input)
@@ -159,6 +210,7 @@ const createTestContext = (
         }
       }
     },
+    receivedAuthenticateInputs,
     receivedInputs
   }
 }

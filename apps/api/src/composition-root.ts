@@ -1,4 +1,9 @@
-import { CreateHouseUseCase, LoginUserUseCase, RegisterUserUseCase } from "@remindler/application"
+import {
+  AuthenticateUserUseCase,
+  CreateHouseUseCase,
+  LoginUserUseCase,
+  RegisterUserUseCase
+} from "@remindler/application"
 
 import { PrismaHouseMemberRepository } from "./adapters/prisma-house-member-repository"
 import { PrismaHouseRepository } from "./adapters/prisma-house-repository"
@@ -13,6 +18,7 @@ import { UnsafeSha256PasswordHasher } from "./adapters/unsafe-sha256-password-ha
 import { createPrismaClient } from "./database/prisma-client"
 
 export type AppDependencies = {
+  authenticateUserUseCase: Pick<AuthenticateUserUseCase, "execute">
   createHouseUseCase: Pick<CreateHouseUseCase, "execute">
   loginUserUseCase: Pick<LoginUserUseCase, "execute">
   registerUserUseCase: Pick<RegisterUserUseCase, "execute">
@@ -32,6 +38,11 @@ export const createAppDependencies = (): AppDependencies => {
   const userSessionRepository = new PrismaUserSessionRepository(prisma)
 
   return {
+    authenticateUserUseCase: new AuthenticateUserUseCase(
+      clock,
+      sessionTokenHasher,
+      userSessionRepository
+    ),
     createHouseUseCase: new CreateHouseUseCase(
       idGenerator,
       clock,
