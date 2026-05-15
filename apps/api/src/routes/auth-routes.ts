@@ -1,7 +1,9 @@
+import { InvalidUserSessionError } from "@remindler/application"
 import { FastifyPluginAsync } from "fastify"
 
-import { authenticateRequest } from "../auth/authenticate-request"
+import { authenticateRequest, extractBearerToken } from "../auth/authenticate-request"
 import { AppDependencies } from "../composition-root"
+import { UnauthenticatedError } from "../errors/missing-authenticated-user-error"
 
 type RegisterUserBody = {
   email: string
@@ -65,4 +67,24 @@ export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, de
       return dependencies.loginUserUseCase.execute(request.body)
     }
   )
+
+  server.post("/auth/logout", async (request, reply) => {
+    const token = extractBearerToken(request.headers.authorization)
+
+    if (token === undefined) {
+      throw new UnauthenticatedError()
+    }
+
+    try {
+      await dependencies.logoutUserUseCase.execute({ token })
+    } catch (error) {
+      if (error instanceof InvalidUserSessionError) {
+        throw new UnauthenticatedError()
+      }
+
+      throw error
+    }
+
+    return reply.code(204).send()
+  })
 }

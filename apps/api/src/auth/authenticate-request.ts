@@ -33,7 +33,7 @@ export const authenticateRequest = async (
   }
 }
 
-const extractBearerToken = (authorizationHeader: string | undefined): string | undefined => {
+export const extractBearerToken = (authorizationHeader: string | undefined): string | undefined => {
   if (authorizationHeader === undefined) {
     return undefined
   }

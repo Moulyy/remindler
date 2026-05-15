@@ -6,6 +6,7 @@ import {
   InvalidUserSessionError,
   LoginUserInput,
   LoginUserOutput,
+  LogoutUserInput,
   RegisterUserInput,
   RegisterUserOutput
 } from "@remindler/application"
@@ -278,6 +279,75 @@ describe("auth routes", () => {
 
     expect(response.statusCode).toBe(400)
   })
+
+  it("logs out the current user session", async () => {
+    const { dependencies, receivedLogoutInputs } = createTestContext()
+    const server = buildServer({
+      logger: false,
+      dependencies
+    })
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/auth/logout",
+      headers: {
+        authorization: "Bearer session_token"
+      }
+    })
+
+    expect(response.statusCode).toBe(204)
+    expect(response.body).toBe("")
+    expect(receivedLogoutInputs).toEqual([
+      {
+        token: "session_token"
+      }
+    ])
+  })
+
+  it("rejects unauthenticated logout requests", async () => {
+    const server = buildServer({
+      logger: false,
+      dependencies: createTestContext().dependencies
+    })
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/auth/logout"
+    })
+
+    expect(response.statusCode).toBe(401)
+    expect(response.json()).toEqual({
+      error: "UNAUTHENTICATED",
+      message: "Authentication is required."
+    })
+  })
+
+  it("rejects invalid logout sessions", async () => {
+    const server = buildServer({
+      logger: false,
+      dependencies: createTestContext(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        new InvalidUserSessionError()
+      ).dependencies
+    })
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/auth/logout",
+      headers: {
+        authorization: "Bearer invalid_token"
+      }
+    })
+
+    expect(response.statusCode).toBe(401)
+    expect(response.json()).toEqual({
+      error: "UNAUTHENTICATED",
+      message: "Authentication is required."
+    })
+  })
 })
 
 const createTestContext = (
@@ -310,17 +380,20 @@ const createTestContext = (
       displayName: "Alice",
       createdAt: new Date("2026-05-12T08:00:00.000Z")
     }
-  }
+  },
+  logoutResult: Error | undefined = undefined
 ): {
   dependencies: AppDependencies
   receivedAuthenticateInputs: AuthenticateUserInput[]
   receivedGetAuthenticatedUserInputs: GetAuthenticatedUserInput[]
   receivedLoginInputs: LoginUserInput[]
+  receivedLogoutInputs: LogoutUserInput[]
   receivedRegisterInputs: RegisterUserInput[]
 } => {
   const receivedAuthenticateInputs: AuthenticateUserInput[] = []
   const receivedGetAuthenticatedUserInputs: GetAuthenticatedUserInput[] = []
   const receivedLoginInputs: LoginUserInput[] = []
+  const receivedLogoutInputs: LogoutUserInput[] = []
   const receivedRegisterInputs: RegisterUserInput[] = []
 
   return {
@@ -363,6 +436,15 @@ const createTestContext = (
           return loginResult
         }
       },
+      logoutUserUseCase: {
+        execute: async (input) => {
+          receivedLogoutInputs.push(input)
+
+          if (logoutResult instanceof Error) {
+            throw logoutResult
+          }
+        }
+      },
       registerUserUseCase: {
         execute: async (input) => {
           receivedRegisterInputs.push(input)
@@ -378,6 +460,7 @@ const createTestContext = (
     receivedAuthenticateInputs,
     receivedGetAuthenticatedUserInputs,
     receivedLoginInputs,
+    receivedLogoutInputs,
     receivedRegisterInputs
   }
 }

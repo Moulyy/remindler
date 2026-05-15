@@ -213,6 +213,11 @@ const createTestContext = (
         execute: async () => {
           throw new Error("Unexpected login user use case call.")
         }
+      },
+      logoutUserUseCase: {
+        execute: async () => {
+          throw new Error("Unexpected logout user use case call.")
+        }
       }
     },
     receivedAuthenticateInputs,

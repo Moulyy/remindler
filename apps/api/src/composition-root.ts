@@ -3,6 +3,7 @@ import {
   CreateHouseUseCase,
   GetAuthenticatedUserUseCase,
   LoginUserUseCase,
+  LogoutUserUseCase,
   RegisterUserUseCase
 } from "@remindler/application"
 
@@ -23,6 +24,7 @@ export type AppDependencies = {
   createHouseUseCase: Pick<CreateHouseUseCase, "execute">
   getAuthenticatedUserUseCase: Pick<GetAuthenticatedUserUseCase, "execute">
   loginUserUseCase: Pick<LoginUserUseCase, "execute">
+  logoutUserUseCase: Pick<LogoutUserUseCase, "execute">
   registerUserUseCase: Pick<RegisterUserUseCase, "execute">
 }
 
@@ -68,6 +70,7 @@ export const createAppDependencies = (): AppDependencies => {
       sessionTokenGenerator,
       sessionTokenHasher,
       userSessionRepository
-    )
+    ),
+    logoutUserUseCase: new LogoutUserUseCase(clock, sessionTokenHasher, userSessionRepository)
   }
 }
