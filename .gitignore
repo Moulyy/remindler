@@ -2,8 +2,10 @@ node_modules/
 dist/
 coverage/
 
+.env
 .DS_Store
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 
 *.log
