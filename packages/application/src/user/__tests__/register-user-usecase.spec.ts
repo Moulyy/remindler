@@ -143,6 +143,7 @@ const createUserRepository = (): UserRepository & { savedUsers: User[] } => {
     savedUsers,
     findByEmail: async (email) =>
       savedUsers.find((user) => user.toSnapshot().email === email.trim().toLowerCase()),
+    findById: async (id) => savedUsers.find((user) => user.toSnapshot().id === id),
     save: async (user) => {
       savedUsers.push(user)
     }

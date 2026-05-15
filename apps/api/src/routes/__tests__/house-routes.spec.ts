@@ -107,8 +107,8 @@ describe("house routes", () => {
 
     expect(response.statusCode).toBe(401)
     expect(response.json()).toEqual({
-      error: "MISSING_AUTHENTICATED_USER",
-      message: "Authenticated user is required."
+      error: "UNAUTHENTICATED",
+      message: "Authentication is required."
     })
   })
 
@@ -131,8 +131,8 @@ describe("house routes", () => {
 
     expect(response.statusCode).toBe(401)
     expect(response.json()).toEqual({
-      error: "MISSING_AUTHENTICATED_USER",
-      message: "Authenticated user is required."
+      error: "UNAUTHENTICATED",
+      message: "Authentication is required."
     })
   })
 
@@ -197,6 +197,11 @@ const createTestContext = (
         execute: async (input) => {
           receivedInputs.push(input)
           return result
+        }
+      },
+      getAuthenticatedUserUseCase: {
+        execute: async () => {
+          throw new Error("Unexpected get authenticated user use case call.")
         }
       },
       registerUserUseCase: {

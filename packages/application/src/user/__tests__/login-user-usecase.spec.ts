@@ -174,6 +174,7 @@ const createClock = (now: Date) => ({
 const createUserRepository = (users: User[]): UserRepository => ({
   findByEmail: async (email) =>
     users.find((user) => user.toSnapshot().email === email.trim().toLowerCase()),
+  findById: async (id) => users.find((user) => user.toSnapshot().id === id),
   save: async (user) => {
     users.push(user)
   }

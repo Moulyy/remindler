@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from "fastify"
 
+import { authenticateRequest } from "../auth/authenticate-request"
 import { AppDependencies } from "../composition-root"
 
 type RegisterUserBody = {
@@ -14,6 +15,14 @@ type LoginUserBody = {
 }
 
 export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, dependencies) => {
+  server.get("/auth/me", async (request) => {
+    const authenticatedUser = await authenticateRequest(request, dependencies)
+
+    return dependencies.getAuthenticatedUserUseCase.execute({
+      userId: authenticatedUser.id
+    })
+  })
+
   server.post<{ Body: RegisterUserBody }>(
     "/auth/register",
     {

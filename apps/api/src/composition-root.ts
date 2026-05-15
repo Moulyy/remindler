@@ -1,6 +1,7 @@
 import {
   AuthenticateUserUseCase,
   CreateHouseUseCase,
+  GetAuthenticatedUserUseCase,
   LoginUserUseCase,
   RegisterUserUseCase
 } from "@remindler/application"
@@ -20,6 +21,7 @@ import { createPrismaClient } from "./database/prisma-client"
 export type AppDependencies = {
   authenticateUserUseCase: Pick<AuthenticateUserUseCase, "execute">
   createHouseUseCase: Pick<CreateHouseUseCase, "execute">
+  getAuthenticatedUserUseCase: Pick<GetAuthenticatedUserUseCase, "execute">
   loginUserUseCase: Pick<LoginUserUseCase, "execute">
   registerUserUseCase: Pick<RegisterUserUseCase, "execute">
 }
@@ -49,6 +51,7 @@ export const createAppDependencies = (): AppDependencies => {
       houseRepository,
       houseMemberRepository
     ),
+    getAuthenticatedUserUseCase: new GetAuthenticatedUserUseCase(userRepository),
     registerUserUseCase: new RegisterUserUseCase(
       idGenerator,
       clock,

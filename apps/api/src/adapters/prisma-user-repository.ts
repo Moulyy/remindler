@@ -17,6 +17,16 @@ export class PrismaUserRepository implements UserRepository {
     return user === null ? undefined : toDomainUser(user)
   }
 
+  async findById(id: string): Promise<User | undefined> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id
+      }
+    })
+
+    return user === null ? undefined : toDomainUser(user)
+  }
+
   async save(user: User): Promise<void> {
     const snapshot = user.toSnapshot()
 

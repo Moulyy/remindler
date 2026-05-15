@@ -1,7 +1,7 @@
 import { UnauthorizedApiError } from "./api-error"
 
-export class MissingAuthenticatedUserError extends UnauthorizedApiError {
+export class UnauthenticatedError extends UnauthorizedApiError {
   constructor() {
-    super("Authenticated user is required.", "MISSING_AUTHENTICATED_USER")
+    super("Authentication is required.", "UNAUTHENTICATED")
   }
 }

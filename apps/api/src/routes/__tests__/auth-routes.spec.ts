@@ -1,5 +1,9 @@
 import {
+  AuthenticateUserInput,
   EmptyUserPasswordError,
+  GetAuthenticatedUserInput,
+  GetAuthenticatedUserOutput,
+  InvalidUserSessionError,
   LoginUserInput,
   LoginUserOutput,
   RegisterUserInput,
@@ -11,6 +15,83 @@ import { AppDependencies } from "../../composition-root"
 import { buildServer } from "../../server"
 
 describe("auth routes", () => {
+  it("returns the authenticated user", async () => {
+    const { dependencies, receivedAuthenticateInputs, receivedGetAuthenticatedUserInputs } =
+      createTestContext()
+    const server = buildServer({
+      logger: false,
+      dependencies
+    })
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/auth/me",
+      headers: {
+        authorization: "Bearer session_token"
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toEqual({
+      user: {
+        id: "user_123",
+        email: "alice@example.com",
+        displayName: "Alice",
+        createdAt: "2026-05-12T08:00:00.000Z"
+      }
+    })
+    expect(receivedAuthenticateInputs).toEqual([
+      {
+        token: "session_token"
+      }
+    ])
+    expect(receivedGetAuthenticatedUserInputs).toEqual([
+      {
+        userId: "user_123"
+      }
+    ])
+  })
+
+  it("rejects unauthenticated me requests", async () => {
+    const server = buildServer({
+      logger: false,
+      dependencies: createTestContext().dependencies
+    })
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/auth/me"
+    })
+
+    expect(response.statusCode).toBe(401)
+    expect(response.json()).toEqual({
+      error: "UNAUTHENTICATED",
+      message: "Authentication is required."
+    })
+  })
+
+  it("rejects invalid me sessions", async () => {
+    const server = buildServer({
+      logger: false,
+      dependencies: createTestContext(undefined, undefined, new InvalidUserSessionError())
+        .dependencies
+    })
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/auth/me",
+      headers: {
+        authorization: "Bearer invalid_token"
+      }
+    })
+
+    expect(response.statusCode).toBe(401)
+    expect(response.json()).toEqual({
+      error: "UNAUTHENTICATED",
+      message: "Authentication is required."
+    })
+  })
+
   it("registers a user", async () => {
     const output: RegisterUserOutput = {
       user: {
@@ -220,25 +301,55 @@ const createTestContext = (
       expiresAt: new Date("2026-06-14T08:30:00.000Z"),
       absoluteExpiresAt: new Date("2026-08-13T08:30:00.000Z")
     }
+  },
+  authenticateResult: { userId: string } | Error = { userId: "user_123" },
+  getAuthenticatedUserResult: GetAuthenticatedUserOutput | Error = {
+    user: {
+      id: "user_123",
+      email: "alice@example.com",
+      displayName: "Alice",
+      createdAt: new Date("2026-05-12T08:00:00.000Z")
+    }
   }
 ): {
   dependencies: AppDependencies
+  receivedAuthenticateInputs: AuthenticateUserInput[]
+  receivedGetAuthenticatedUserInputs: GetAuthenticatedUserInput[]
   receivedLoginInputs: LoginUserInput[]
   receivedRegisterInputs: RegisterUserInput[]
 } => {
+  const receivedAuthenticateInputs: AuthenticateUserInput[] = []
+  const receivedGetAuthenticatedUserInputs: GetAuthenticatedUserInput[] = []
   const receivedLoginInputs: LoginUserInput[] = []
   const receivedRegisterInputs: RegisterUserInput[] = []
 
   return {
     dependencies: {
       authenticateUserUseCase: {
-        execute: async () => {
-          throw new Error("Unexpected authenticate user use case call.")
+        execute: async (input) => {
+          receivedAuthenticateInputs.push(input)
+
+          if (authenticateResult instanceof Error) {
+            throw authenticateResult
+          }
+
+          return authenticateResult
         }
       },
       createHouseUseCase: {
         execute: async () => {
           throw new Error("Unexpected create house use case call.")
+        }
+      },
+      getAuthenticatedUserUseCase: {
+        execute: async (input) => {
+          receivedGetAuthenticatedUserInputs.push(input)
+
+          if (getAuthenticatedUserResult instanceof Error) {
+            throw getAuthenticatedUserResult
+          }
+
+          return getAuthenticatedUserResult
         }
       },
       loginUserUseCase: {
@@ -264,6 +375,8 @@ const createTestContext = (
         }
       }
     },
+    receivedAuthenticateInputs,
+    receivedGetAuthenticatedUserInputs,
     receivedLoginInputs,
     receivedRegisterInputs
   }

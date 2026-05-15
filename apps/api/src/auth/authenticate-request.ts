@@ -2,7 +2,7 @@ import { InvalidUserSessionError } from "@remindler/application"
 import { FastifyRequest } from "fastify"
 
 import { AppDependencies } from "../composition-root"
-import { MissingAuthenticatedUserError } from "../errors/missing-authenticated-user-error"
+import { UnauthenticatedError } from "../errors/missing-authenticated-user-error"
 
 export type AuthenticatedUser = {
   id: string
@@ -15,7 +15,7 @@ export const authenticateRequest = async (
   const token = extractBearerToken(request.headers.authorization)
 
   if (token === undefined) {
-    throw new MissingAuthenticatedUserError()
+    throw new UnauthenticatedError()
   }
 
   try {
@@ -26,7 +26,7 @@ export const authenticateRequest = async (
     }
   } catch (error) {
     if (error instanceof InvalidUserSessionError) {
-      throw new MissingAuthenticatedUserError()
+      throw new UnauthenticatedError()
     }
 
     throw error

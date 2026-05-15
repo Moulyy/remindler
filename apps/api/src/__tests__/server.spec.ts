@@ -45,6 +45,11 @@ const createDependencies = (): AppDependencies => ({
       throw new Error("Unexpected create house use case call.")
     }
   },
+  getAuthenticatedUserUseCase: {
+    execute: async () => {
+      throw new Error("Unexpected get authenticated user use case call.")
+    }
+  },
   loginUserUseCase: {
     execute: async () => {
       throw new Error("Unexpected login user use case call.")
