@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
 
+import { AppDependencies } from "../composition-root"
 import { buildServer } from "../server"
 
 describe("API server", () => {
   it("responds to root checks", async () => {
-    const server = buildServer({ logger: false })
+    const server = buildServer({ logger: false, dependencies: createDependencies() })
 
     const response = await server.inject({
       method: "GET",
@@ -19,7 +20,7 @@ describe("API server", () => {
   })
 
   it("responds to health checks", async () => {
-    const server = buildServer({ logger: false })
+    const server = buildServer({ logger: false, dependencies: createDependencies() })
 
     const response = await server.inject({
       method: "GET",
@@ -31,4 +32,22 @@ describe("API server", () => {
       status: "ok"
     })
   })
+})
+
+const createDependencies = (): AppDependencies => ({
+  createHouseUseCase: {
+    execute: async () => {
+      throw new Error("Unexpected create house use case call.")
+    }
+  },
+  loginUserUseCase: {
+    execute: async () => {
+      throw new Error("Unexpected login user use case call.")
+    }
+  },
+  registerUserUseCase: {
+    execute: async () => {
+      throw new Error("Unexpected register user use case call.")
+    }
+  }
 })

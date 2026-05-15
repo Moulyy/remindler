@@ -1,12 +1,13 @@
 import { CreateHouseUseCase, LoginUserUseCase, RegisterUserUseCase } from "@remindler/application"
 
-import { InMemoryHouseMemberRepository } from "./adapters/in-memory-house-member-repository"
-import { InMemoryHouseRepository } from "./adapters/in-memory-house-repository"
-import { InMemoryUserCredentialsRepository } from "./adapters/in-memory-user-credentials-repository"
-import { InMemoryUserRepository } from "./adapters/in-memory-user-repository"
+import { PrismaHouseMemberRepository } from "./adapters/prisma-house-member-repository"
+import { PrismaHouseRepository } from "./adapters/prisma-house-repository"
+import { PrismaUserCredentialsRepository } from "./adapters/prisma-user-credentials-repository"
+import { PrismaUserRepository } from "./adapters/prisma-user-repository"
 import { RandomIdGenerator } from "./adapters/random-id-generator"
 import { SystemClock } from "./adapters/system-clock"
 import { UnsafeSha256PasswordHasher } from "./adapters/unsafe-sha256-password-hasher"
+import { createPrismaClient } from "./database/prisma-client"
 
 export type AppDependencies = {
   createHouseUseCase: Pick<CreateHouseUseCase, "execute">
@@ -15,13 +16,14 @@ export type AppDependencies = {
 }
 
 export const createAppDependencies = (): AppDependencies => {
+  const prisma = createPrismaClient()
   const idGenerator = new RandomIdGenerator()
   const clock = new SystemClock()
   const passwordHasher = new UnsafeSha256PasswordHasher()
-  const houseRepository = new InMemoryHouseRepository()
-  const houseMemberRepository = new InMemoryHouseMemberRepository()
-  const userRepository = new InMemoryUserRepository()
-  const userCredentialsRepository = new InMemoryUserCredentialsRepository()
+  const houseRepository = new PrismaHouseRepository(prisma)
+  const houseMemberRepository = new PrismaHouseMemberRepository(prisma)
+  const userRepository = new PrismaUserRepository(prisma)
+  const userCredentialsRepository = new PrismaUserCredentialsRepository(prisma)
 
   return {
     createHouseUseCase: new CreateHouseUseCase(
