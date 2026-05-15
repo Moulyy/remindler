@@ -9,3 +9,9 @@ export type {
   UserCredentialsRepository,
   UserRepository
 } from "./register-user-usecase"
+export type {
+  SessionTokenGenerator,
+  SessionTokenHasher,
+  UserSession,
+  UserSessionRepository
+} from "./user-session"

@@ -6,16 +6,22 @@ import {
   InvalidUserCredentialsError,
   LoginUserUseCase,
   PasswordHasher,
+  SessionTokenGenerator,
+  SessionTokenHasher,
   UserCredentials,
   UserCredentialsRepository,
-  UserRepository
+  UserRepository,
+  UserSession,
+  UserSessionRepository
 } from "../index"
 
 describe("LoginUserUseCase", () => {
   it("logs in a user", async () => {
     const createdAt = new Date("2026-05-12T08:00:00.000Z")
+    const now = new Date("2026-05-15T08:30:00.000Z")
     const user = User.create("user_123", "alice@example.com", "Alice", createdAt)
-    const { passwordHasher, useCase } = createUseCase({
+    const { passwordHasher, userSessionRepository, useCase } = createUseCase({
+      now,
       users: [user],
       credentials: [
         {
@@ -38,12 +44,28 @@ describe("LoginUserUseCase", () => {
         email: "alice@example.com",
         displayName: "Alice",
         createdAt
+      },
+      session: {
+        token: "session_token",
+        expiresAt: new Date("2026-06-14T08:30:00.000Z"),
+        absoluteExpiresAt: new Date("2026-08-13T08:30:00.000Z")
       }
     })
     expect(passwordHasher.verifiedPasswords).toEqual([
       {
         password: "password_123",
         hash: "hashed_password"
+      }
+    ])
+    expect(userSessionRepository.savedSessions).toEqual([
+      {
+        id: "session_123",
+        userId: "user_123",
+        tokenHash: "hashed_session_token",
+        createdAt: now,
+        lastUsedAt: now,
+        expiresAt: new Date("2026-06-14T08:30:00.000Z"),
+        absoluteExpiresAt: new Date("2026-08-13T08:30:00.000Z")
       }
     ])
   })
@@ -106,23 +128,48 @@ describe("LoginUserUseCase", () => {
 })
 
 const createUseCase = ({
+  now = new Date("2026-05-15T08:30:00.000Z"),
   users = [],
   credentials = [],
   validPassword = true
 }: {
+  now?: Date
   users?: User[]
   credentials?: UserCredentials[]
   validPassword?: boolean
 } = {}) => {
+  const idGenerator = createIdGenerator("session_123")
+  const clock = createClock(now)
   const userRepository = createUserRepository(users)
   const userCredentialsRepository = createUserCredentialsRepository(credentials)
   const passwordHasher = createPasswordHasher(validPassword)
+  const sessionTokenGenerator = createSessionTokenGenerator("session_token")
+  const sessionTokenHasher = createSessionTokenHasher("hashed_session_token")
+  const userSessionRepository = createUserSessionRepository()
 
   return {
     passwordHasher,
-    useCase: new LoginUserUseCase(userRepository, userCredentialsRepository, passwordHasher)
+    userSessionRepository,
+    useCase: new LoginUserUseCase(
+      idGenerator,
+      clock,
+      userRepository,
+      userCredentialsRepository,
+      passwordHasher,
+      sessionTokenGenerator,
+      sessionTokenHasher,
+      userSessionRepository
+    )
   }
 }
+
+const createIdGenerator = (id: string) => ({
+  generate: () => id
+})
+
+const createClock = (now: Date) => ({
+  now: () => now
+})
 
 const createUserRepository = (users: User[]): UserRepository => ({
   findByEmail: async (email) =>
@@ -153,6 +200,27 @@ const createPasswordHasher = (
     verify: async (password, hash) => {
       verifiedPasswords.push({ password, hash })
       return validPassword
+    }
+  }
+}
+
+const createSessionTokenGenerator = (token: string): SessionTokenGenerator => ({
+  generate: () => token
+})
+
+const createSessionTokenHasher = (tokenHash: string): SessionTokenHasher => ({
+  hash: async () => tokenHash
+})
+
+const createUserSessionRepository = (): UserSessionRepository & {
+  savedSessions: UserSession[]
+} => {
+  const savedSessions: UserSession[] = []
+
+  return {
+    savedSessions,
+    save: async (session) => {
+      savedSessions.push(session)
     }
   }
 }
