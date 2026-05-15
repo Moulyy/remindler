@@ -131,7 +131,8 @@ const createPasswordHasher = (
     hash: async (password) => {
       hashedPasswords.push(password)
       return passwordHash
-    }
+    },
+    verify: async (password, hash) => passwordHash === hash && password !== ""
   }
 }
 
@@ -140,6 +141,8 @@ const createUserRepository = (): UserRepository & { savedUsers: User[] } => {
 
   return {
     savedUsers,
+    findByEmail: async (email) =>
+      savedUsers.find((user) => user.toSnapshot().email === email.trim().toLowerCase()),
     save: async (user) => {
       savedUsers.push(user)
     }
@@ -153,6 +156,8 @@ const createUserCredentialsRepository = (): UserCredentialsRepository & {
 
   return {
     savedCredentials,
+    findByUserId: async (userId) =>
+      savedCredentials.find((credentials) => credentials.userId === userId),
     save: async (credentials) => {
       savedCredentials.push(credentials)
     }

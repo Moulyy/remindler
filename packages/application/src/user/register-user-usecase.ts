@@ -19,15 +19,18 @@ export type UserCredentials = {
 }
 
 export type UserRepository = {
+  findByEmail(email: string): Promise<User | undefined>
   save(user: User): Promise<void>
 }
 
 export type UserCredentialsRepository = {
+  findByUserId(userId: string): Promise<UserCredentials | undefined>
   save(credentials: UserCredentials): Promise<void>
 }
 
 export type PasswordHasher = {
   hash(password: string): Promise<string>
+  verify(password: string, hash: string): Promise<boolean>
 }
 
 export class EmptyUserPasswordError extends Error {

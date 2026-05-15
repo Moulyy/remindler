@@ -4,7 +4,9 @@ import Fastify from "fastify"
 import { FastifyPluginAsync } from "fastify"
 
 import { AppDependencies, createAppDependencies } from "./composition-root"
+import { ApiError } from "./errors/api-error"
 import { authRoutes } from "./routes/auth-routes"
+import { houseRoutes } from "./routes/house-routes"
 
 export type BuildServerOptions = {
   logger?: boolean
@@ -18,6 +20,13 @@ export const buildServer = (options: BuildServerOptions = {}) => {
   })
 
   server.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ApiError) {
+      return reply.code(error.statusCode).send({
+        error: error.code,
+        message: error.message
+      })
+    }
+
     if (isBadRequestError(error)) {
       return reply.code(400).send({
         error: "Bad Request",
@@ -49,6 +58,7 @@ const createApiRoutes = (dependencies: AppDependencies): FastifyPluginAsync => {
     })
 
     await server.register(authRoutes, dependencies)
+    await server.register(houseRoutes, dependencies)
   }
 }
 
