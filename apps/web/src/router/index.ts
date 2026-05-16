@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router"
 
-import { getAuthenticatedUser } from "@/services/auth-api"
+import { useAuthStore } from "@/stores/auth-store"
 import Dashboard from "@/views/Dashboard.vue"
 import Login from "@/views/Login.vue"
 
@@ -29,9 +29,11 @@ export const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+
   if (to.meta.requiresAuth === true) {
     try {
-      await getAuthenticatedUser()
+      await authStore.loadAuthenticatedUser()
       return true
     } catch {
       return "/login"
@@ -40,7 +42,7 @@ router.beforeEach(async (to) => {
 
   if (to.meta.guestOnly === true) {
     try {
-      await getAuthenticatedUser()
+      await authStore.loadAuthenticatedUser()
       return "/dashboard"
     } catch {
       return true

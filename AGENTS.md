@@ -123,6 +123,9 @@ Avoid importing from apps inside packages.
 
 Use the shared root `tsconfig.base.json` for common compiler options.
 
+Prefer `await` with `try`/`catch` for asynchronous control flow. Avoid `.then()` and `.catch()`
+chains unless an API specifically requires promise chaining or the alternative would be less clear.
+
 Each workspace may define its own local alias:
 
 ```json

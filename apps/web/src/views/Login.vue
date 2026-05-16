@@ -4,18 +4,19 @@ import { ref } from "vue"
 import { useRouter } from "vue-router"
 
 import LoginForm from "@/components/LoginForm.vue"
-import { login } from "@/services/auth-api"
+import { useAuthStore } from "@/stores/auth-store"
 
 const isLoading = ref(false)
 const errorMessage = ref<string>()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const handleLogin = async (credentials: LoginUserRequest) => {
   isLoading.value = true
   errorMessage.value = undefined
 
   try {
-    await login(credentials)
+    await authStore.loginUser(credentials)
     await router.push("/dashboard")
   } catch {
     errorMessage.value = "Identifiants invalides."
