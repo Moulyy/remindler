@@ -1,36 +1,22 @@
 <script setup lang="ts">
+import type { LoginUserRequest } from "@remindler/shared"
 import { ref } from "vue"
+import { useRouter } from "vue-router"
 
 import LoginForm from "@/components/LoginForm.vue"
-
-type LoginCredentials = {
-  email: string
-  password: string
-}
+import { login } from "@/services/auth-api"
 
 const isLoading = ref(false)
 const errorMessage = ref<string>()
+const router = useRouter()
 
-const handleLogin = async (credentials: LoginCredentials) => {
+const handleLogin = async (credentials: LoginUserRequest) => {
   isLoading.value = true
   errorMessage.value = undefined
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(credentials)
-    })
-
-    if (!response.ok) {
-      throw new Error("Login failed")
-    }
-
-    const data = await response.json()
-
-    console.log("Login successful!", data)
+    await login(credentials)
+    await router.push("/dashboard")
   } catch {
     errorMessage.value = "Identifiants invalides."
   } finally {

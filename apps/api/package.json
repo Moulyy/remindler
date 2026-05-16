@@ -17,6 +17,7 @@
     "@prisma/client": "^7.8.0",
     "@remindler/application": "workspace:*",
     "@remindler/domain": "workspace:*",
+    "@remindler/shared": "workspace:*",
     "fastify": "latest",
     "pg": "^8.20.0"
   },

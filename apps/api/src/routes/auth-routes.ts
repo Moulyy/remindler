@@ -1,31 +1,33 @@
-import { InvalidUserSessionError } from "@remindler/application"
+import {
+  GetAuthenticatedUserOutput,
+  InvalidUserSessionError,
+  LoginUserOutput,
+  RegisterUserOutput
+} from "@remindler/application"
+import {
+  GetAuthenticatedUserResponse,
+  LoginUserRequest,
+  LoginUserResponse,
+  RegisterUserRequest,
+  RegisterUserResponse
+} from "@remindler/shared"
 import { FastifyPluginAsync } from "fastify"
 
 import { authenticateRequest, extractBearerToken } from "../auth/authenticate-request"
 import { AppDependencies } from "../composition-root"
 import { UnauthenticatedError } from "../errors/missing-authenticated-user-error"
 
-type RegisterUserBody = {
-  email: string
-  displayName: string
-  password: string
-}
-
-type LoginUserBody = {
-  email: string
-  password: string
-}
-
 export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, dependencies) => {
   server.get("/auth/me", async (request) => {
     const authenticatedUser = await authenticateRequest(request, dependencies)
-
-    return dependencies.getAuthenticatedUserUseCase.execute({
+    const output = await dependencies.getAuthenticatedUserUseCase.execute({
       userId: authenticatedUser.id
     })
+
+    return toGetAuthenticatedUserResponse(output)
   })
 
-  server.post<{ Body: RegisterUserBody }>(
+  server.post<{ Body: RegisterUserRequest }>(
     "/auth/register",
     {
       schema: {
@@ -44,11 +46,11 @@ export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, de
     async (request, reply) => {
       const output = await dependencies.registerUserUseCase.execute(request.body)
 
-      return reply.code(201).send(output)
+      return reply.code(201).send(toRegisterUserResponse(output))
     }
   )
 
-  server.post<{ Body: LoginUserBody }>(
+  server.post<{ Body: LoginUserRequest }>(
     "/auth/login",
     {
       schema: {
@@ -64,7 +66,9 @@ export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, de
       }
     },
     async (request) => {
-      return dependencies.loginUserUseCase.execute(request.body)
+      const output = await dependencies.loginUserUseCase.execute(request.body)
+
+      return toLoginUserResponse(output)
     }
   )
 
@@ -87,4 +91,44 @@ export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, de
 
     return reply.code(204).send()
   })
+}
+
+const toRegisterUserResponse = (output: RegisterUserOutput): RegisterUserResponse => {
+  return {
+    user: {
+      id: output.user.id,
+      email: output.user.email,
+      displayName: output.user.displayName,
+      createdAt: output.user.createdAt.toISOString()
+    }
+  }
+}
+
+const toGetAuthenticatedUserResponse = (
+  output: GetAuthenticatedUserOutput
+): GetAuthenticatedUserResponse => {
+  return {
+    user: {
+      id: output.user.id,
+      email: output.user.email,
+      displayName: output.user.displayName,
+      createdAt: output.user.createdAt.toISOString()
+    }
+  }
+}
+
+const toLoginUserResponse = (output: LoginUserOutput): LoginUserResponse => {
+  return {
+    user: {
+      id: output.user.id,
+      email: output.user.email,
+      displayName: output.user.displayName,
+      createdAt: output.user.createdAt.toISOString()
+    },
+    session: {
+      token: output.session.token,
+      expiresAt: output.session.expiresAt.toISOString(),
+      absoluteExpiresAt: output.session.absoluteExpiresAt.toISOString()
+    }
+  }
 }

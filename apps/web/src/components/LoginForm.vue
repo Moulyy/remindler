@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { LoginUserRequest } from "@remindler/shared"
 import type { HTMLAttributes } from "vue"
 import { ref } from "vue"
 
@@ -21,7 +22,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  login: [credentials: { email: string; password: string }]
+  login: [credentials: LoginUserRequest]
 }>()
 
 const email = ref("")
