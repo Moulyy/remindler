@@ -1,12 +1,10 @@
 import type {
   AuthenticatedUserDto,
   GetAuthenticatedUserResponse,
-  LoginUserRequest,
-  LoginUserResponse
+  LoginUserRequest
 } from "@remindler/shared"
 
 import { apiFetch } from "./api-client"
-import { clearAuthToken, setAuthToken } from "./auth-session"
 
 export const login = async (credentials: LoginUserRequest): Promise<AuthenticatedUserDto> => {
   const response = await apiFetch("/auth/login", {
@@ -21,9 +19,7 @@ export const login = async (credentials: LoginUserRequest): Promise<Authenticate
     throw new Error("Login failed")
   }
 
-  const data = (await response.json()) as LoginUserResponse
-
-  setAuthToken(data.session.token)
+  const data = (await response.json()) as GetAuthenticatedUserResponse
 
   return data.user
 }
@@ -32,7 +28,6 @@ export const getAuthenticatedUser = async (): Promise<AuthenticatedUserDto> => {
   const response = await apiFetch("/auth/me")
 
   if (!response.ok) {
-    clearAuthToken()
     throw new Error("Authentication failed")
   }
 

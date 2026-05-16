@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router"
 
 import { getAuthenticatedUser } from "@/services/auth-api"
-import { getAuthToken } from "@/services/auth-session"
 import Dashboard from "@/views/Dashboard.vue"
 import Login from "@/views/Login.vue"
 
@@ -31,10 +30,6 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
   if (to.meta.requiresAuth === true) {
-    if (getAuthToken() === undefined) {
-      return "/login"
-    }
-
     try {
       await getAuthenticatedUser()
       return true
@@ -43,7 +38,7 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (to.meta.guestOnly === true && getAuthToken() !== undefined) {
+  if (to.meta.guestOnly === true) {
     try {
       await getAuthenticatedUser()
       return "/dashboard"

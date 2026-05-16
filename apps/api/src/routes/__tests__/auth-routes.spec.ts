@@ -28,7 +28,7 @@ describe("auth routes", () => {
       method: "GET",
       url: "/api/auth/me",
       headers: {
-        authorization: "Bearer session_token"
+        cookie: "remindler_session=session_token"
       }
     })
 
@@ -49,6 +49,29 @@ describe("auth routes", () => {
     expect(receivedGetAuthenticatedUserInputs).toEqual([
       {
         userId: "user_123"
+      }
+    ])
+  })
+
+  it("still accepts bearer tokens for authenticated requests", async () => {
+    const { dependencies, receivedAuthenticateInputs } = createTestContext()
+    const server = buildServer({
+      logger: false,
+      dependencies
+    })
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/auth/me",
+      headers: {
+        authorization: "Bearer session_token"
+      }
+    })
+
+    expect(response.statusCode).toBe(200)
+    expect(receivedAuthenticateInputs).toEqual([
+      {
+        token: "session_token"
       }
     ])
   })
@@ -82,7 +105,7 @@ describe("auth routes", () => {
       method: "GET",
       url: "/api/auth/me",
       headers: {
-        authorization: "Bearer invalid_token"
+        cookie: "remindler_session=invalid_token"
       }
     })
 
@@ -224,17 +247,20 @@ describe("auth routes", () => {
     })
 
     expect(response.statusCode).toBe(200)
+    expect(response.cookies).toEqual([
+      expect.objectContaining({
+        httpOnly: true,
+        name: "remindler_session",
+        sameSite: "Lax",
+        value: "session_token"
+      })
+    ])
     expect(response.json()).toEqual({
       user: {
         id: "user_123",
         email: "alice@example.com",
         displayName: "Alice",
         createdAt: "2026-05-12T08:00:00.000Z"
-      },
-      session: {
-        token: "session_token",
-        expiresAt: "2026-06-14T08:30:00.000Z",
-        absoluteExpiresAt: "2026-08-13T08:30:00.000Z"
       }
     })
   })
@@ -291,12 +317,18 @@ describe("auth routes", () => {
       method: "POST",
       url: "/api/auth/logout",
       headers: {
-        authorization: "Bearer session_token"
+        cookie: "remindler_session=session_token"
       }
     })
 
     expect(response.statusCode).toBe(204)
     expect(response.body).toBe("")
+    expect(response.cookies).toEqual([
+      expect.objectContaining({
+        name: "remindler_session",
+        value: ""
+      })
+    ])
     expect(receivedLogoutInputs).toEqual([
       {
         token: "session_token"
@@ -338,7 +370,7 @@ describe("auth routes", () => {
       method: "POST",
       url: "/api/auth/logout",
       headers: {
-        authorization: "Bearer invalid_token"
+        cookie: "remindler_session=invalid_token"
       }
     })
 

@@ -14,6 +14,7 @@ import {
 import { FastifyPluginAsync } from "fastify"
 
 import { authenticateRequest, extractBearerToken } from "../auth/authenticate-request"
+import { clearSessionCookie, getSessionCookie, setSessionCookie } from "../auth/session-cookie"
 import { AppDependencies } from "../composition-root"
 import { UnauthenticatedError } from "../errors/missing-authenticated-user-error"
 
@@ -65,15 +66,16 @@ export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, de
         }
       }
     },
-    async (request) => {
+    async (request, reply) => {
       const output = await dependencies.loginUserUseCase.execute(request.body)
+      setSessionCookie(reply, output.session.token)
 
       return toLoginUserResponse(output)
     }
   )
 
   server.post("/auth/logout", async (request, reply) => {
-    const token = extractBearerToken(request.headers.authorization)
+    const token = getSessionCookie(request) ?? extractBearerToken(request.headers.authorization)
 
     if (token === undefined) {
       throw new UnauthenticatedError()
@@ -88,6 +90,8 @@ export const authRoutes: FastifyPluginAsync<AppDependencies> = async (server, de
 
       throw error
     }
+
+    clearSessionCookie(reply)
 
     return reply.code(204).send()
   })
@@ -124,11 +128,6 @@ const toLoginUserResponse = (output: LoginUserOutput): LoginUserResponse => {
       email: output.user.email,
       displayName: output.user.displayName,
       createdAt: output.user.createdAt.toISOString()
-    },
-    session: {
-      token: output.session.token,
-      expiresAt: output.session.expiresAt.toISOString(),
-      absoluteExpiresAt: output.session.absoluteExpiresAt.toISOString()
     }
   }
 }

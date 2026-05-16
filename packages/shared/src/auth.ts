@@ -22,11 +22,6 @@ export type RegisterUserResponse = {
 
 export type LoginUserResponse = {
   user: AuthenticatedUserDto
-  session: {
-    token: string
-    expiresAt: string
-    absoluteExpiresAt: string
-  }
 }
 
 export type GetAuthenticatedUserResponse = {

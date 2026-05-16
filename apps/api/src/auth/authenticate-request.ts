@@ -3,6 +3,7 @@ import { FastifyRequest } from "fastify"
 
 import { AppDependencies } from "../composition-root"
 import { UnauthenticatedError } from "../errors/missing-authenticated-user-error"
+import { getSessionCookie } from "./session-cookie"
 
 export type AuthenticatedUser = {
   id: string
@@ -12,7 +13,7 @@ export const authenticateRequest = async (
   request: FastifyRequest,
   dependencies: AppDependencies
 ): Promise<AuthenticatedUser> => {
-  const token = extractBearerToken(request.headers.authorization)
+  const token = getSessionCookie(request) ?? extractBearerToken(request.headers.authorization)
 
   if (token === undefined) {
     throw new UnauthenticatedError()
