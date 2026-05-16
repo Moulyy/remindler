@@ -1,5 +1,6 @@
 import { EmptyUserPasswordError } from "@remindler/application"
 import { DomainError } from "@remindler/domain"
+import cors from "@fastify/cors"
 import Fastify from "fastify"
 import { FastifyPluginAsync } from "fastify"
 
@@ -17,6 +18,11 @@ export const buildServer = (options: BuildServerOptions = {}) => {
   const dependencies = options.dependencies ?? createAppDependencies()
   const server = Fastify({
     logger: options.logger ?? true
+  })
+
+  server.register(cors, {
+    origin: process.env.WEB_APP_ORIGIN ?? "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   })
 
   server.setErrorHandler((error, _request, reply) => {

@@ -1,7 +1,6 @@
-import { getMessage } from "@remindler/shared"
+import { createApp } from "vue"
 
-const app = document.querySelector<HTMLDivElement>("#app")
+import App from "./App.vue"
+import "./style.css"
 
-if (app) {
-  app.textContent = getMessage()
-}
+createApp(App).mount("#app")
